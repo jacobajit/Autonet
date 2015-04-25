@@ -49,6 +49,8 @@ public class SignupActivity extends ActionBarActivity implements SignupFragment.
 	private int BID;
 	private boolean fake;
 	private ArrayList<AsyncTask> mTasks;
+    private boolean returnAID;
+    private String blockName;
 
 	public enum Response {
 		SUCCESS, CAPACITY, RESTRICTED, CANCELLED, PRESIGN, ATTENDANCE_TAKEN, FAIL
@@ -60,6 +62,8 @@ public class SignupActivity extends ActionBarActivity implements SignupFragment.
 		setContentView(R.layout.activity_signup);
 		final Intent intent = getIntent();
 		BID = intent.getIntExtra("BID", -1);
+        returnAID = intent.getBooleanExtra("returnAID", false);
+        blockName=intent.getStringExtra("block");
 		mTasks = new ArrayList<>();
 
 		// Check if restoring from previously destroyed instance that matches the BID
@@ -88,6 +92,7 @@ public class SignupActivity extends ActionBarActivity implements SignupFragment.
 		}
 		getSupportActionBar().setDisplayHomeAsUpEnabled(true);
 	}
+
 
 	@Override
 	protected void onResume() {
@@ -172,17 +177,31 @@ public class SignupActivity extends ActionBarActivity implements SignupFragment.
 	public void submit(EighthActivityItem item) {
 		// Perform checks before submission
 		// Note that server performs checks as well
-		 if (item.isCancelled()) {
-			postSubmit(Response.CANCELLED);
-		} else if (item.isFull()) {
-			postSubmit(Response.CAPACITY);
+
+        if(returnAID==true)//if intent triggered from autonet
+        {
+            Log.d(TAG, "triggered from autonet");
+            final Intent intent = new Intent(this, AutonetActivity.class);
+            intent.putExtra("newData",true);
+            intent.putExtra("block",blockName);
+            intent.putExtra("AID", item.getAID());
+            //start autonet activity with aid extra
+        }
+
+        else {
+
+            if (item.isCancelled()) {
+                postSubmit(Response.CANCELLED);
+            } else if (item.isFull()) {
+                postSubmit(Response.CAPACITY);
 //		} else if (item.isRestricted()) {
 //			postSubmit(Response.RESTRICTED);
-		} else if (item.isAttendanceTaken()) {
-			postSubmit(Response.ATTENDANCE_TAKEN);
-		} else {
-			mTasks.add(new SignupRequest(item.getAID(), item.getBID()).execute("https://iodine.tjhsst.edu/api/eighth/signup_activity"));
-		}
+            } else if (item.isAttendanceTaken()) {
+                postSubmit(Response.ATTENDANCE_TAKEN);
+            } else {
+                mTasks.add(new SignupRequest(item.getAID(), item.getBID()).execute("https://iodine.tjhsst.edu/api/eighth/signup_activity"));
+            }
+        }
 	}
 
 	// Notify the user after submission
@@ -349,8 +368,10 @@ public class SignupActivity extends ActionBarActivity implements SignupFragment.
 			super.onPostExecute(result);
 			mTasks.remove(this);
 			if(result) {
+                Log.d(TAG,"success");
 				postSubmit(Response.SUCCESS);
 			} else {
+                Log.d(TAG,"fail");
 				postSubmit(Response.FAIL);
 			}
 		}

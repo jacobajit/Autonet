@@ -22,4 +22,8 @@
 
 	<string name="contributors">Thanks to: Timothy Cyrus and Rushi Shah</string>
 	<string name="license">VIEW LICENSE</string>
+    <string name="title_activity_autonet">AutonetActivity</string>
+
+    <string name="hello_world">Hello world!</string>
+    <string name="signinguptext">Signing up for preferred blocks...</string>
 </resources>

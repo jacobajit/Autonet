@@ -73,6 +73,7 @@ public class HomeActivity extends AbstractDrawerActivity implements BlockFragmen
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
+
 		super.onCreate(savedInstanceState);
 
 		// Check if restoring from previously destroyed instance
@@ -99,6 +100,7 @@ public class HomeActivity extends AbstractDrawerActivity implements BlockFragmen
 					mScheduleFragment = (ScheduleFragment) getFragmentManager().getFragment(savedInstanceState, "scheduleFragment");
 					break;
 			}
+
 		}
 
 		// Set header text
@@ -111,6 +113,8 @@ public class HomeActivity extends AbstractDrawerActivity implements BlockFragmen
 			// Retrieve cookies from shared preferences
 			final SharedPreferences preferences = getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE);
 			mCookies = LoginActivity.getCookies(preferences);
+            String mString = preferences.getString("MondayB", "not found");
+            Log.d(TAG,mString);
 		}
 	}
 
@@ -146,6 +150,7 @@ public class HomeActivity extends AbstractDrawerActivity implements BlockFragmen
 		adapter.setItems(new NavMenuBuilder()
 				.addItem(NavMenuItem.create(101, "Eighth", R.drawable.ic_event_available_black_24dp))
 				.addItem(NavMenuItem.create(102, "Schedule", R.drawable.ic_today_black_24dp))
+                .addItem(NavMenuItem.create(103, "Autonet", R.drawable.ic_today_black_24dp))
 				.addSeparator()
 //				.addItem(NavMenuItem.createButton(201, "Settings", R.drawable.ic_settings_black_24dp))
 				.addItem(NavMenuItem.createButton(202, "About", R.drawable.ic_help_black_24dp))
@@ -174,6 +179,9 @@ public class HomeActivity extends AbstractDrawerActivity implements BlockFragmen
 			case 102:
 				switchView(Section.SCHEDULE);
 				break;
+            case 103:
+                startActivity(new Intent(this, AutonetActivity.class));
+                break;
 //			case 201:
 //				break;
 			case 202:
