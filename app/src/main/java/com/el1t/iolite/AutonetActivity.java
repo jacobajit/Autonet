@@ -50,7 +50,7 @@ public class AutonetActivity extends ActionBarActivity {
 
         setContentView(R.layout.activity_autonet);
         final Intent intent = getIntent();
-        if(intent.getBooleanExtra("newData",false))//if an activity preference selection is being sent from SignupActivity
+        if(intent.getBooleanExtra("newData",false))//checks if an activity preference selection is being sent from SignupActivity
         {
             updateData(intent.getStringExtra("blockName"),intent.getIntExtra("AID",-1));
         }
