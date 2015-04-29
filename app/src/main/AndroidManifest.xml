@@ -57,6 +57,18 @@
             android:name=".AutonetActivity"
             android:label="@string/title_activity_autonet" >
         </activity>
+
+        <service
+            android:name=".AutonetService"
+            android:enabled="true"
+            android:exported="true" >
+        </service>
+
+        <receiver
+            android:name=".AlarmReceiver"
+            android:enabled="true"
+            android:exported="true" >
+        </receiver>
     </application>
 
 </manifest>

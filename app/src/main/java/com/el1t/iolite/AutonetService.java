@@ -1,13 +1,12 @@
 package com.el1t.iolite;
 
+import android.app.IntentService;
 import android.content.Intent;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.os.AsyncTask;
-import android.support.v7.app.ActionBarActivity;
-import android.os.Bundle;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
+
 import com.el1t.iolite.item.EighthBlockItem;
 import com.el1t.iolite.parser.EighthActivityXmlParser;
 import com.el1t.iolite.parser.EighthBlockXmlParser;
@@ -27,108 +26,84 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Calendar;
 import java.util.List;
-import 	java.text.SimpleDateFormat;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
+
 import javax.net.ssl.HttpsURLConnection;
-import android.content.Context;
 
+/**
+ * An {@link IntentService} subclass for handling asynchronous task requests in
+ * a service on a separate handler thread.
+ * <p/>
+ * TODO: Customize class - update intent actions, extra parameters and static
+ * helper methods.
+ */
+public class AutonetService extends IntentService {
+    // TODO: Rename actions, choose action names that describe tasks that this
+    // IntentService can perform, e.g. ACTION_FETCH_NEW_ITEMS
+    private static final String ACTION_FOO = "com.el1t.iolite.action.FOO";
+    private static final String ACTION_BAZ = "com.el1t.iolite.action.BAZ";
 
-public class AutonetActivity extends ActionBarActivity {
+    // TODO: Rename parameters
+    private static final String EXTRA_PARAM1 = "com.el1t.iolite.extra.PARAM1";
+    private static final String EXTRA_PARAM2 = "com.el1t.iolite.extra.PARAM2";
     private Cookie[] mCookies;
     private ArrayList<EighthBlockItem> blockList;
     private ArrayList<AsyncTask> mTasks;
     private SharedPreferences preferences;
     private SharedPreferences.Editor mEditor;
-    private AlarmManager alarmMgr;
-    private PendingIntent alarmIntent;
+
+
+
+    public AutonetService() {
+        super("AutonetService");
+    }
+
     @Override
-    protected void onCreate(Bundle savedInstanceState) {
-
-        super.onCreate(savedInstanceState);
-        preferences= getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE);
-        mEditor= preferences.edit();
-
-        setContentView(R.layout.activity_autonet);
-        final Intent intent = getIntent();
-        if(intent.getBooleanExtra("newData",false))//checks if an activity preference selection is being sent from SignupActivity
-        {
-            updateData(intent.getStringExtra("blockName"),intent.getIntExtra("AID",-1));
+    protected void onHandleIntent(Intent intent) {
+        if (intent != null) {
+            Log.d("TAG","Entering service...");
+            preferences= getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE);
+            mEditor= preferences.edit();
+            mCookies = LoginActivity.getCookies(preferences);
+            mTasks = new ArrayList<>();
+            new BlockListRequest().execute("https://iodine.tjhsst.edu/api/eighth/list_blocks");
         }
-        mCookies = LoginActivity.getCookies(preferences);
-        mTasks = new ArrayList<>();
-        updateData("MonB",628);//set up random preferences for testing
-        updateData("WedA",2707);
-        updateData("WedB", 2934);
-        updateData("FriA",207);
-        updateData("FriB",993);
-
-        Context context=this;
-
-        alarmMgr = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
-        Intent intentReceiver = new Intent(context, AlarmReceiver.class);
-        alarmIntent = PendingIntent.getBroadcast(context, 0, intentReceiver, 0);
-
-        Calendar calendar = Calendar.getInstance();
-        calendar.setTimeInMillis(System.currentTimeMillis());
-        calendar.set(Calendar.HOUR_OF_DAY, 3);
-        int minute=(int)Math.random()*60;
-        calendar.set(Calendar.MINUTE, minute);
-
-
-        alarmMgr.setInexactRepeating(AlarmManager.RTC_WAKEUP, calendar.getTimeInMillis(),
-                AlarmManager.INTERVAL_DAY, alarmIntent);
-
-
-        //Intent mServiceIntent = new Intent(this, AutonetService.class);//sign up for activities
-        //this.startService(mServiceIntent);
-
-
     }
-    public void updateData(String blockName,int AID)//save preferences for a certain block
+
+
+    public void signUp(ArrayList<EighthBlockItem> output)//sign up for blocks with preferred activities
     {
-        mEditor.putInt(blockName, AID).commit();
-        Log.d("TAG","Data updated");
 
-    }
+        blockList=output;
+        int blockAID;
+        SimpleDateFormat simpleDateformat = new SimpleDateFormat("E");
 
-    public void saveSelection(int BID,String block) //Get an activity selection through SignupActivity
-    {
-        // Send data to SignupActivity
-        final Intent intent = new Intent(this, SignupActivity.class);
-        intent.putExtra("block",block);
-        intent.putExtra("BID", BID);
-        intent.putExtra("returnAID", true);
-        startActivity(intent);
-    }
+        Log.d("TAG","Standard signup...");
+        for (EighthBlockItem item : blockList) {
+            Log.d("tag", item.getDate().toString());
+            String day = simpleDateformat.format(item.getDate());
+            String block = item.getBlock();
 
-    @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
-        // Inflate the menu; this adds items to the action bar if it is present.
-        getMenuInflater().inflate(R.menu.menu_autonet, menu);
-        return true;
-    }
+            String a = day + block;
+
+            blockAID = preferences.getInt(a, 999);
 
 
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
+            if (item.getEighth().getAID() == 999)
+            {
 
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+                mTasks.add(new SignupRequest(blockAID, item.getBID()).execute("https://iodine.tjhsst.edu/api/eighth/signup_activity"));
+
+
+            }
+
+
         }
+        //saveSelection(2954);
 
-        return super.onOptionsItemSelected(item);
     }
-
-
     private class BlockListRequest extends AsyncTask<String, Void, ArrayList<EighthBlockItem>> {
         private static final String TAG = "Block List Connection";
         @Override
@@ -161,7 +136,7 @@ public class AutonetActivity extends ActionBarActivity {
 
 
             super.onPostExecute(result);
-
+            signUp(result);
         }
     }
     private class SignupRequest extends AsyncTask<String, Void, Boolean> {
@@ -221,4 +196,3 @@ public class AutonetActivity extends ActionBarActivity {
         }
     }
 }
-
