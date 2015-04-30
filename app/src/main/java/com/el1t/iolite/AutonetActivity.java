@@ -88,11 +88,11 @@ public class AutonetActivity extends ActionBarActivity /*implements AutonetFragm
 
 
         savedActivities=new ArrayList<String>();
-        savedActivities.add("Monday B: "+preferences.getString("MonBname","Select an activity."));
-        savedActivities.add("Wednesday A: "+preferences.getString("WedAname","Select an activity."));
-        savedActivities.add("Wednesday B: "+preferences.getString("WedBname","Select an activity."));
-        savedActivities.add("Friday A: "+preferences.getString("FriAname","Select an activity."));
-        savedActivities.add("Friday B: "+preferences.getString("FriBname","Select an activity."));
+        savedActivities.add("MonB: "+preferences.getString("MonBname","Select an activity."));//first 4 letters must be formatted this way for now
+        savedActivities.add("WedA: "+preferences.getString("WedAname","Select an activity."));
+        savedActivities.add("WedB: "+preferences.getString("WedBname","Select an activity."));
+        savedActivities.add("FriA: "+preferences.getString("FriAname","Select an activity."));
+        savedActivities.add("FriB: "+preferences.getString("FriBname","Select an activity."));
 
         final ListView listview = (ListView) findViewById(R.id.autonet_list);
 
@@ -138,6 +138,7 @@ public class AutonetActivity extends ActionBarActivity /*implements AutonetFragm
 
     public int findNextBID(String blockname)  {
         ArrayList<EighthBlockItem> list= null;
+        Log.d("TAG","Looking for"+blockname);
         try {
             list = new BlockListRequest().execute("https://iodine.tjhsst.edu/api/eighth/list_blocks").get();
         } catch (InterruptedException e) {
@@ -152,12 +153,16 @@ public class AutonetActivity extends ActionBarActivity /*implements AutonetFragm
             String block = item.getBlock();
 
             String a = day + block;
+            Log.d("TAG",a);
             if(a.equals(blockname))
             {
+                Log.d("TAG",item.getBID()+"");
                 return item.getBID();
             }
 
         }
+        Log.d("TAG","Not found.");
+
         return -1;
     }
     public void updateData(String blockName,int AID)//save preferences for a certain block
