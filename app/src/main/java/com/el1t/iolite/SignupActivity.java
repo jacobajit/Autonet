@@ -183,8 +183,10 @@ public class SignupActivity extends ActionBarActivity implements SignupFragment.
             Log.d(TAG, "triggered from autonet");
             final Intent intent = new Intent(this, AutonetActivity.class);
             intent.putExtra("newData",true);
-            intent.putExtra("block",blockName);
+            intent.putExtra("blockName",blockName);
             intent.putExtra("AID", item.getAID());
+            intent.putExtra("activityName",item.getName());
+            startActivity(intent);
             //start autonet activity with aid extra
         }
 

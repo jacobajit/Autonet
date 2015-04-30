@@ -29,15 +29,23 @@ import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 import java.util.List;
 import 	java.text.SimpleDateFormat;
+import java.util.concurrent.ExecutionException;
+
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import javax.net.ssl.HttpsURLConnection;
 import android.content.Context;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.support.v7.widget.Toolbar;
 
 
-public class AutonetActivity extends ActionBarActivity {
+public class AutonetActivity extends ActionBarActivity /*implements AutonetFragment.OnFragmentInteractionListener*/ {
     private Cookie[] mCookies;
     private ArrayList<EighthBlockItem> blockList;
     private ArrayList<AsyncTask> mTasks;
@@ -45,6 +53,8 @@ public class AutonetActivity extends ActionBarActivity {
     private SharedPreferences.Editor mEditor;
     private AlarmManager alarmMgr;
     private PendingIntent alarmIntent;
+    private ArrayList<String> savedActivities;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
 
@@ -52,19 +62,57 @@ public class AutonetActivity extends ActionBarActivity {
         preferences= getSharedPreferences(LoginActivity.PREFS_NAME, MODE_PRIVATE);
         mEditor= preferences.edit();
 
+
         setContentView(R.layout.activity_autonet);
+
+        Toolbar mActionBarToolbar = (Toolbar) findViewById(R.id.autonet_toolbar);
+        setSupportActionBar(mActionBarToolbar);
+        getSupportActionBar().setTitle("Autonet");
+        getSupportActionBar().setDisplayHomeAsUpEnabled(true);
+
         final Intent intent = getIntent();
         if(intent.getBooleanExtra("newData",false))//checks if an activity preference selection is being sent from SignupActivity
         {
+            Log.d("TAG","Updating new data received...");
+            Log.d("TAG",intent.getStringExtra("blockName"));
+            Log.d("TAG",intent.getIntExtra("AID", -1)+"");
+
             updateData(intent.getStringExtra("blockName"),intent.getIntExtra("AID",-1));
+            String blockActivityName=intent.getStringExtra("blockName")+"name";
+            Log.d("TAG",blockActivityName);
+            updateData(blockActivityName,intent.getStringExtra("activityName"));
+
         }
         mCookies = LoginActivity.getCookies(preferences);
         mTasks = new ArrayList<>();
-        updateData("MonB",628);//set up random preferences for testing
-        updateData("WedA",2707);
-        updateData("WedB", 2934);
-        updateData("FriA",207);
-        updateData("FriB",993);
+
+
+        savedActivities=new ArrayList<String>();
+        savedActivities.add("Monday B: "+preferences.getString("MonBname","Select an activity."));
+        savedActivities.add("Wednesday A: "+preferences.getString("WedAname","Select an activity."));
+        savedActivities.add("Wednesday B: "+preferences.getString("WedBname","Select an activity."));
+        savedActivities.add("Friday A: "+preferences.getString("FriAname","Select an activity."));
+        savedActivities.add("Friday B: "+preferences.getString("FriBname","Select an activity."));
+
+        final ListView listview = (ListView) findViewById(R.id.autonet_list);
+
+        final StableArrayAdapter adapter = new StableArrayAdapter(this,
+                android.R.layout.simple_list_item_1, savedActivities);
+        listview.setAdapter(adapter);
+
+        listview.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+
+                                            @Override
+            public void onItemClick(AdapterView<?> parent, final View view,
+                                    int position, long id) {
+                //saveSelection(findNextBID(parent.getItemAtPosition(position).toString().substring(0,4)),parent.getItemAtPosition(position).toString().substring(0,4));
+                String block=parent.getItemAtPosition(position).toString().substring(0,4);
+                int nextBID=findNextBID(block);
+                saveSelection(nextBID,block);
+
+            }
+        });
+
 
         Context context=this;
 
@@ -83,14 +131,44 @@ public class AutonetActivity extends ActionBarActivity {
                 AlarmManager.INTERVAL_DAY, alarmIntent);
 
 
-        //Intent mServiceIntent = new Intent(this, AutonetService.class);//sign up for activities
-        //this.startService(mServiceIntent);
 
 
+
+    }
+
+    public int findNextBID(String blockname)  {
+        ArrayList<EighthBlockItem> list= null;
+        try {
+            list = new BlockListRequest().execute("https://iodine.tjhsst.edu/api/eighth/list_blocks").get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+        for(EighthBlockItem item:list)
+        {
+            SimpleDateFormat simpleDateformat = new SimpleDateFormat("E");
+            String day = simpleDateformat.format(item.getDate());
+            String block = item.getBlock();
+
+            String a = day + block;
+            if(a.equals(blockname))
+            {
+                return item.getBID();
+            }
+
+        }
+        return -1;
     }
     public void updateData(String blockName,int AID)//save preferences for a certain block
     {
         mEditor.putInt(blockName, AID).commit();
+        Log.d("TAG","Data updated");
+
+    }
+    public void updateData(String blockName,String activity)//save preferences for a certain block
+    {
+        mEditor.putString(blockName, activity).commit();
         Log.d("TAG","Data updated");
 
     }
@@ -115,17 +193,16 @@ public class AutonetActivity extends ActionBarActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
-        int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
+        switch (item.getItemId()) {
+            case android.R.id.home:
+                // app icon in action bar clicked; go home
+                Intent intent = new Intent(this, HomeActivity.class);
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
+                startActivity(intent);
+                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-
-        return super.onOptionsItemSelected(item);
     }
 
 
@@ -219,6 +296,30 @@ public class AutonetActivity extends ActionBarActivity {
                 //postSubmit(Response.FAIL);
             }
         }
+    }
+    private class StableArrayAdapter extends ArrayAdapter<String> {
+
+        HashMap<String, Integer> mIdMap = new HashMap<String, Integer>();
+
+        public StableArrayAdapter(Context context, int textViewResourceId,
+                                  List<String> objects) {
+            super(context, textViewResourceId, objects);
+            for (int i = 0; i < objects.size(); ++i) {
+                mIdMap.put(objects.get(i), i);
+            }
+        }
+
+        @Override
+        public long getItemId(int position) {
+            String item = getItem(position);
+            return mIdMap.get(item);
+        }
+
+        @Override
+        public boolean hasStableIds() {
+            return true;
+        }
+
     }
 }
 
