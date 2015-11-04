@@ -1,21 +1,6 @@
-![Iolite](./logo.png)
-======
+TJ's eighth period system is great, but the flexibility it offers can become a hassle when you're trying to wrap up a homework assignment during lunch. This is a fork of Iolite, which signs up for your preferred clubs automatically.
 
-[![Available on Google Play](http://developer.android.com/images/brand/en_app_rgb_wo_60.png)](https://play.google.com/store/apps/details?id=com.el1t.iolite)
-
-The Android companion to TJHSST's intranet is here!  
-
-Tired of using the web interface on your mobile device? Iolite is a native interface for [TJHSST's Iodine](https://iodine.tjhsst.edu/) in Google's beautiful material design. Browsing Iodine has never been easier!
-
-## Features:
-- [x] View activities
-- [x] Favorite activities
-- [x] Sign up for activities
-- [x] View schedule
-- [ ] Search activities
-- [ ] View activity info
-- [ ] View news
-- [ ] Look up students in directory
-- [ ] Notifications
-
-This project uses Google's [Material Design Icons](https://github.com/google/material-design-icons), which are licensed under an [Attribution 4.0 International](http://creativecommons.org/licenses/by/4.0/) license. Some icons were slightly modified.
+* Avoid wasting away lunch waiting for TJ servers to respond
+* Reduce that server load - signs up for activities at random times well before day of
+* Never “forget to sign up”
+* Get spots in popular clubs as soon as they open- checks for new blocks and signs up once a day
